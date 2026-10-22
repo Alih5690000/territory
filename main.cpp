@@ -87,7 +87,6 @@ class Territory{
                     auto j = available[rand() % available.size()];
                     i->attack=attack;
                     if(i->Invade(j)){
-                        ttt.AfterAttack(j);
                         ps.push_back(j);
                         attack=i->attack;
                         invaded++;
@@ -99,7 +98,6 @@ class Territory{
                     if (j->team.id==team){
                         i->attack=attack;
                         if(i->Invade(j)){
-                            ttt.AfterAttack(j);
                             ps.push_back(j);
                             attack=i->attack;
                             invaded++;
@@ -115,9 +113,6 @@ class Territory{
         for (auto i:bs){
             i->defense=defense;
         }
-    }
-    void AfterAttack(Pixel* p){
-        defense=p->defense;
     }
     void rest(float am){
         defense+=am;
