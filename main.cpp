@@ -1,5 +1,6 @@
 #include <vector>
 #include <iostream>
+#include <algorithm>
 
 struct Team{
     char color;
@@ -11,15 +12,20 @@ const Team TEAM_DEFAULT=Team{'.', 0};
 struct Pixel {
     int x,y;
     Team team;
+    std::vector<Pixel*>& t;
     float attack;
     float defense;
-    Pixel(int x_, int y_, Team t, float att, float def):
-        x(x_),y(y_),team(t),attack(att),defense(def){}
+    Pixel(int x_, int y_, Team t, float att, float def,
+        std::vector<Pixel*>& tt):
+        x(x_),y(y_),team(t),attack(att),defense(def),t(tt){}
     bool Invade(Pixel* p){
         if (attack>0 && p->team.id!=team.id){
             p->team=team;
             attack-=p->defense/10;
             p->attack=0;
+            p->t.erase(
+                std::remove(p->t.begin(), 
+                p->t.end(), p), p->t.end());
             return true;
         }
         return false;
@@ -111,12 +117,15 @@ class Territory{
     }
 };
 
+std::vector<Pixel*> EMPTY={};
+
 Map CreateMap(int w, int h){
     Map res;
     for (int i=0;i<h;i++){
         std::vector<Pixel> a;
         for (int j=0;j<w;j++){
-            a.push_back(Pixel{j,i,TEAM_DEFAULT, 10, 10});
+            a.push_back(Pixel{j,i,TEAM_DEFAULT, 10, 10, 
+                EMPTY});
         }
         res.push_back(a);
     }
@@ -135,8 +144,10 @@ void PrintMap(const Map& m){
 int main(){
     srand(time(NULL));
     Map map=CreateMap(20, 20);
-    map[0][0]=Pixel{0, 0, {'#', 1}, 0, 10};
     Territory t(map, {&map[0][0]});
+    map[0][0].team={'#', 1};
+    map[0][0].attack=0;
+    map[0][0].defense=10;
     t.team={'#', 1};
     for (int k=0;k<3;k++){
         for (int i=0;i<100;i++)
