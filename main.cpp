@@ -70,9 +70,11 @@ class Territory{
         }
         return borders;
     }
-    void invade(int team){
+    void invade(Territory ttt){
+        int team=ttt.team.id;
         int invaded=0;
         auto bs=getBorders();
+        ttt.InitDefense();
         for (auto i:bs){
             auto ns=GetNeighbors(map, *i);
             if (team==-1){
@@ -84,8 +86,8 @@ class Territory{
                 if (!available.empty()) {
                     auto j = available[rand() % available.size()];
                     i->attack=attack;
-                    i->defense=defense;
                     if(i->Invade(j)){
+                        ttt.AfterAttack(j);
                         ps.push_back(j);
                         attack=i->attack;
                         invaded++;
@@ -96,8 +98,8 @@ class Territory{
                 for (auto j:ns){
                     if (j->team.id==team){
                         i->attack=attack;
-                        i->defense=defense;
                         if(i->Invade(j)){
+                            ttt.AfterAttack(j);
                             ps.push_back(j);
                             attack=i->attack;
                             invaded++;
@@ -107,6 +109,15 @@ class Territory{
             }
         }
         attack+=invaded/5.f;
+    }
+    void InitDefense(){
+        auto bs=getBorders();
+        for (auto i:bs){
+            i->defense=defense;
+        }
+    }
+    void AfterAttack(Pixel* p){
+        defense=p->defense;
     }
     void rest(float am){
         defense+=am;
@@ -118,6 +129,7 @@ class Territory{
 };
 
 std::vector<Pixel*> EMPTY={};
+Map EMPTY_MAP;
 
 Map CreateMap(int w, int h){
     Map res;
@@ -141,6 +153,12 @@ void PrintMap(const Map& m){
     }
 }
 
+const auto EMPTY_LANDS=[](Map& m){
+    auto t=Territory(m);
+    t.team.id=-1;
+    return t;
+};
+
 int main(){
     srand(time(NULL));
     Map map=CreateMap(20, 20);
@@ -151,7 +169,7 @@ int main(){
     t.team={'#', 1};
     for (int k=0;k<3;k++){
         for (int i=0;i<100;i++)
-            t.invade(-1);
+            t.invade(EMPTY_LANDS(map));
         t.rest(5);
     }
     PrintMap(map);
