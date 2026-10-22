@@ -11,12 +11,15 @@ const Team TEAM_DEFAULT=Team{'.', 0};
 struct Pixel {
     int x,y;
     Team team;
-    float hp;
+    float attack;
+    float defense;
+    Pixel(int x_, int y_, Team t, float att, float def):
+        x(x_),y(y_),team(t),attack(att),defense(def){}
     bool Invade(Pixel* p){
-        if (hp>0 && p->team.id!=team.id){
+        if (attack>0 && p->team.id!=team.id){
             p->team=team;
-            hp-=p->hp/10;
-            p->hp=0;
+            attack-=p->defense/10;
+            p->attack=0;
             return true;
         }
         return false;
@@ -44,8 +47,9 @@ class Territory{
     public:
     Team team;
     Map& map;
-    float hp=20;
     float power=20.f;
+    float attack=10;
+    float defense=10.f;
     std::vector<Pixel*> ps;
     std::vector<Pixel*> getBorders(){
         std::vector<Pixel*> borders;
@@ -73,10 +77,11 @@ class Territory{
                 }
                 if (!available.empty()) {
                     auto j = available[rand() % available.size()];
-                    i->hp=power;
+                    i->attack=attack;
+                    i->defense=defense;
                     if(i->Invade(j)){
                         ps.push_back(j);
-                        power=i->hp;
+                        attack=i->attack;
                         invaded++;
                     }
                 }
@@ -84,20 +89,22 @@ class Territory{
             else{
                 for (auto j:ns){
                     if (j->team.id==team){
-                        i->hp=power;
+                        i->attack=attack;
+                        i->defense=defense;
                         if(i->Invade(j)){
                             ps.push_back(j);
-                            power=i->hp;
+                            attack=i->attack;
                             invaded++;
                         }
                     }
                 }
             }
         }
-        hp+=invaded/5.f;
+        attack+=invaded/5.f;
     }
     void rest(float am){
-        power+=am;
+        defense+=am;
+        attack+=am;
     }
     Territory(Map& ma, std::vector<Pixel*> p={}):map(ma){
         ps=p;
@@ -109,7 +116,7 @@ Map CreateMap(int w, int h){
     for (int i=0;i<h;i++){
         std::vector<Pixel> a;
         for (int j=0;j<w;j++){
-            a.push_back(Pixel{j,i,TEAM_DEFAULT, 20});
+            a.push_back(Pixel{j,i,TEAM_DEFAULT, 10, 10});
         }
         res.push_back(a);
     }
@@ -128,7 +135,7 @@ void PrintMap(const Map& m){
 int main(){
     srand(time(NULL));
     Map map=CreateMap(20, 20);
-    map[0][0]=Pixel{0, 0, {'#', 1}, 20};
+    map[0][0]=Pixel{0, 0, {'#', 1}, 0, 10};
     Territory t(map, {&map[0][0]});
     t.team={'#', 1};
     for (int k=0;k<3;k++){
