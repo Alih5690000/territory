@@ -56,10 +56,13 @@ class Territory{
     float power=20.f;
     float attack=10;
     float defense=10.f;
+    float oldDefense=defense;
     std::vector<Pixel*> ps;
     std::vector<Pixel*> getBorders(){
         std::vector<Pixel*> borders;
         for (const auto& p : ps) {
+            if (p->team.id != team.id)
+                continue;
             auto neighbors = GetNeighbors(map, *p);
             for (const auto& n : neighbors) {
                 if (n->team.id != team.id) {
@@ -91,6 +94,10 @@ class Territory{
                         attack=i->attack;
                         invaded++;
                     }
+                    else{
+                        if (j->team.id!=this->team.id)
+                            CacnelDefense(j);
+                    }
                 }
             }
             else{
@@ -102,21 +109,34 @@ class Territory{
                             attack=i->attack;
                             invaded++;
                         }
+                        else{
+                            if (j->team.id!=this->team.id)
+                                CacnelDefense(j);
+                        }
                     }
                 }
             }
         }
         attack+=invaded/5.f;
     }
+    float part;
     void InitDefense(){
         auto bs=getBorders();
+        if (bs.empty()) return;
+        part=defense/bs.size();
         for (auto i:bs){
-            i->defense=defense;
+            i->defense+=part;
         }
+        oldDefense=defense;
+        defense=0;
+    }
+    void CacnelDefense(Pixel* p){
+        p->defense-=part;
+        defense+=part;
     }
     void rest(float am){
-        defense+=am;
-        attack+=am;
+        defense=std::min(defense+am, power/2.f);
+        attack=std::min(attack+am, power/2.f);
     }
     Territory(Map& ma, std::vector<Pixel*> p={}):map(ma){
         ps=p;
