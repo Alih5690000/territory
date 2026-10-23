@@ -59,7 +59,7 @@ class Territory{
     float MaxAttack=10;
     float MaxDefense=1;
     float attack=10;
-    float defense=10.f;
+    float defense=1.f;
     float oldDefense=defense;
     std::vector<Pixel*> ps;
     std::vector<Pixel*> getBorders(){
