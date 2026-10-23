@@ -54,7 +54,8 @@ class Territory{
     public:
     Team team;
     Map& map;
-    float power=20.f;
+    float MaxAttack=10;
+    float MaxDefense=10;
     float attack=10;
     float defense=10.f;
     float oldDefense=defense;
@@ -138,8 +139,8 @@ class Territory{
         defense+=part;
     }
     void rest(float am){
-        defense=std::min(defense+am, power/2.f);
-        attack=std::min(attack+am, power/2.f);
+        defense=std::min(defense+am, MaxDefense);
+        attack=std::min(attack+am, MaxAttack);
     }
     Territory(Map& ma, std::vector<Pixel*> p={}):map(ma){
         ps=p;
