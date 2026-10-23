@@ -1,6 +1,7 @@
 #include <vector>
 #include <iostream>
 #include <algorithm>
+#include <windows.h>
 
 struct Team{
     char color;
@@ -176,26 +177,32 @@ const auto EMPTY_LANDS=[](Map& m){
     return t;
 };
 
+void reset_console_cursor() {
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    COORD pos = {0, 0};
+    SetConsoleCursorPosition(hConsole, pos);
+}
+
 int main(){
     srand(time(NULL));
     Map map=CreateMap(20, 20);
     Territory t(map, {&map[0][0]});
     map[0][0].team={'#', 1};
-    t.attack=100000;
-    t.defense=100000;
+    t.attack=1000;
+    t.defense=100;
     t.team={'#', 1};
     Territory tt(map, {&map[0][19]});
     map[0][19].team={'@', 2};
-    tt.attack=200000;
-    tt.defense=200000;
+    tt.attack=2000;
+    tt.defense=200;
     tt.team={'@', 2};
-    for (int k=0;k<200;k++){
-        for (int i=0;i<100;i++){
-            t.invade(EMPTY_LANDS(map));
-            tt.invade(EMPTY_LANDS(map));
-        }
-        /*t.rest(5);
-        tt.rest(5);*/
+    for (;;){
+        t.invade(EMPTY_LANDS(map));
+        tt.invade(EMPTY_LANDS(map));
+        PrintMap(map);
+        reset_console_cursor();
     }
+    /*t.rest(5);
+    tt.rest(5);*/
     PrintMap(map);
 }
