@@ -101,7 +101,7 @@ class Territory{
                     }
                     else{
                         if (j->team.id!=this->team.id)
-                            CacnelDefense(j);
+                            CancelDefense(j);
                     }
                 }
             }
@@ -117,7 +117,7 @@ class Territory{
                         }
                         else{
                             if (j->team.id!=this->team.id)
-                                CacnelDefense(j);
+                                CancelDefense(j);
                         }
                     }
                 }
@@ -135,7 +135,7 @@ class Territory{
         oldDefense=defense;
         defense=0;
     }
-    void CacnelDefense(Pixel* p){
+    void CancelDefense(Pixel* p){
         p->defense-=part;
         defense+=part;
     }
