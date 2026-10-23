@@ -22,7 +22,7 @@ struct Pixel {
     bool Invade(Pixel* p){
         if (attack>0 && p->team.id!=team.id){
             p->team=team;
-            attack-=p->defense/10;
+            attack-=p->defense;
             p->attack=0;
             p->t.erase(
                 std::remove(p->t.begin(), 
@@ -54,8 +54,10 @@ class Territory{
     public:
     Team team;
     Map& map;
+    float AttackBoost=1.f;
+    float DefenseBoost=1.f;
     float MaxAttack=10;
-    float MaxDefense=10;
+    float MaxDefense=1;
     float attack=10;
     float defense=10.f;
     float oldDefense=defense;
@@ -90,11 +92,11 @@ class Territory{
                 }
                 if (!available.empty()) {
                     auto j = available[rand() % available.size()];
-                    i->attack=attack;
+                    i->attack=attack*AttackBoost;
+                    attack-=j->defense;
                     if(i->Invade(j)){
                         if (std::find(ps.begin(), ps.end(), j) == ps.end())
                             ps.push_back(j);
-                        attack=i->attack;
                         invaded++;
                     }
                     else{
@@ -106,11 +108,11 @@ class Territory{
             else{
                 for (auto j:ns){
                     if (j->team.id==team){
-                        i->attack=attack;
+                        i->attack=attack*AttackBoost;
+                        attack-=j->defense;
                         if(i->Invade(j)){
                             if (std::find(ps.begin(), ps.end(), j) == ps.end())
                                 ps.push_back(j);
-                            attack=i->attack;
                             invaded++;
                         }
                         else{
@@ -127,9 +129,8 @@ class Territory{
     void InitDefense(){
         auto bs=getBorders();
         if (bs.empty()) return;
-        part=defense/bs.size();
         for (auto i:bs){
-            i->defense+=part;
+            i->defense+=defense*DefenseBoost;
         }
         oldDefense=defense;
         defense=0;
@@ -190,12 +191,12 @@ int main(){
     Territory t(map, {&map[0][0]});
     map[0][0].team={'#', 1};
     t.attack=1000;
-    t.defense=100;
+    t.defense=10;
     t.team={'#', 1};
     Territory tt(map, {&map[0][19]});
     map[0][19].team={'@', 2};
     tt.attack=2000;
-    tt.defense=200;
+    tt.defense=20;
     tt.team={'@', 2};
     for (;;){
         t.invade(EMPTY_LANDS(map));
