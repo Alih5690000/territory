@@ -90,7 +90,8 @@ class Territory{
                     auto j = available[rand() % available.size()];
                     i->attack=attack;
                     if(i->Invade(j)){
-                        ps.push_back(j);
+                        if (std::find(ps.begin(), ps.end(), j) == ps.end())
+                            ps.push_back(j);
                         attack=i->attack;
                         invaded++;
                     }
@@ -105,7 +106,8 @@ class Territory{
                     if (j->team.id==team){
                         i->attack=attack;
                         if(i->Invade(j)){
-                            ps.push_back(j);
+                            if (std::find(ps.begin(), ps.end(), j) == ps.end())
+                                ps.push_back(j);
                             attack=i->attack;
                             invaded++;
                         }
@@ -179,13 +181,21 @@ int main(){
     Map map=CreateMap(20, 20);
     Territory t(map, {&map[0][0]});
     map[0][0].team={'#', 1};
-    map[0][0].attack=0;
-    map[0][0].defense=10;
+    t.attack=100000;
+    t.defense=100000;
     t.team={'#', 1};
-    for (int k=0;k<3;k++){
-        for (int i=0;i<100;i++)
+    Territory tt(map, {&map[0][19]});
+    map[0][19].team={'@', 2};
+    tt.attack=200000;
+    tt.defense=200000;
+    tt.team={'@', 2};
+    for (int k=0;k<200;k++){
+        for (int i=0;i<100;i++){
             t.invade(EMPTY_LANDS(map));
-        t.rest(5);
+            tt.invade(EMPTY_LANDS(map));
+        }
+        /*t.rest(5);
+        tt.rest(5);*/
     }
     PrintMap(map);
 }
