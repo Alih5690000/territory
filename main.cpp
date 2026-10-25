@@ -78,10 +78,12 @@ class Territory{
         return borders;
     }
     void invade(Territory ttt){
+        float left=0.f;
+        do{
+        left=0.f;
         int team=ttt.team.id;
         int invaded=0;
         auto bs=getBorders();
-        float left=0.f;
         ttt.InitDefense();
         for (auto i:bs){
             auto ns=GetNeighbors(map, *i);
@@ -155,7 +157,7 @@ class Territory{
                 }
             }
         }
-        if (left>0.f) invade(ttt);
+        } while (left>0.f);
     }
     float part;
     void InitDefense(){
