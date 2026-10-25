@@ -159,6 +159,10 @@ class Territory{
         }
         } while (left>0.f);
     }
+    void UpdateStats(){
+        MaxAttack=ps.size();
+        MaxDefense=ps.size();
+    }
     float part;
     void InitDefense(){
         auto bs=getBorders();
@@ -230,12 +234,14 @@ int main(){
     t.team={'#', 1};
     Territory tt(map, {&map[0][19]});
     map[0][19].team={'@', 2};
-    tt.attack=40;
-    tt.defense=20;
+    tt.attack=100;
+    tt.defense=100;
     tt.team={'@', 2};
     for (;;){
         t.invade(EMPTY_LANDS(map));
         tt.invade(EMPTY_LANDS(map));
+        t.UpdateStats();
+        tt.UpdateStats();
         t.rest(5);
         tt.rest(20);
         PrintMap(map);
