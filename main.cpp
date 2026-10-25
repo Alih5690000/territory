@@ -81,6 +81,7 @@ class Territory{
         int team=ttt.team.id;
         int invaded=0;
         auto bs=getBorders();
+        float left=0.f;
         ttt.InitDefense();
         for (auto i:bs){
             auto ns=GetNeighbors(map, *i);
@@ -91,44 +92,76 @@ class Territory{
                         available.push_back(j);
                 }
                 if (!available.empty()) {
-                    auto j = available[rand() % available.size()];
-                    i->attack=attack*AttackBoost;
-                    attack-=j->defense;
-                    if(i->Invade(j)){
-                        if (std::find(ps.begin(), ps.end(), j) == ps.end())
+                    i->attack=attack*AttackBoost+left;
+                    float budget1=attack;
+                    bool sucess=false;
+                    float sum=0;
+                    int val=0;
+                    std::vector<Pixel*> visited;
+                    while(budget1>0){
+                        if (visited.size()==available.size()
+                            || i->attack<=0.f) break;
+                        Pixel* j;
+                        while(true){
+                            j = available[rand() % available.size()];
+                            if (std::find(visited.begin(), 
+                                visited.end(), j) == visited.end()){
+                                    visited.push_back(j);
+                                    break;
+                            }   
+                        }
+                        if(i->Invade(j) && 
+                            std::find(ps.begin(), ps.end(), j) == ps.end()){
                             ps.push_back(j);
-                        invaded++;
-                    }
-                    else{
-                        if (j->team.id!=this->team.id)
-                            CancelDefense(j);
-                    }
-                }
-            }
-            else{
-                for (auto j:ns){
-                    if (j->team.id==team){
-                        i->attack=attack*AttackBoost;
-                        attack-=j->defense;
-                        if(i->Invade(j)){
-                            if (std::find(ps.begin(), ps.end(), j) == ps.end())
-                                ps.push_back(j);
                             invaded++;
+                            sucess=true;
+                            budget1-=j->defense;
+                            sum+=j->defense;
+                            val++;
                         }
                         else{
                             if (j->team.id!=this->team.id)
                                 CancelDefense(j);
                         }
                     }
+                    left=std::max(0.f, i->attack);
+                    if (sucess) attack-=sum/val;
+                }
+            }
+            else{
+                for (auto j:ns){
+                    float sum=0;
+                    int val=0;
+                    if (j->team.id==team){
+                        i->attack=attack*AttackBoost+left;
+                        bool sucess=false;
+                        if(i->Invade(j) && 
+                            std::find(ps.begin(), ps.end(), j) == ps.end()){
+                            ps.push_back(j);
+                            invaded++;
+                            sucess=true;
+                            sum+=j->defense;
+                            val++;
+                        }
+                        else{
+                            if (j->team.id!=this->team.id)
+                                CancelDefense(j);
+                        }
+                        if (sucess) {
+                            attack-=sum/val;
+                            left=std::max(0.f, i->attack);
+                        }
+                    }
                 }
             }
         }
-        attack+=invaded/5.f;
+        if (left>0.f) invade(ttt);
     }
     float part;
     void InitDefense(){
         auto bs=getBorders();
         if (bs.empty()) return;
+        part=defense/bs.size();
         for (auto i:bs){
             i->defense+=defense*DefenseBoost;
         }
@@ -190,17 +223,19 @@ int main(){
     Map map=CreateMap(20, 20);
     Territory t(map, {&map[0][0]});
     map[0][0].team={'#', 1};
-    t.attack=1000;
+    t.attack=10;
     t.defense=10;
     t.team={'#', 1};
     Territory tt(map, {&map[0][19]});
     map[0][19].team={'@', 2};
-    tt.attack=2000;
+    tt.attack=40;
     tt.defense=20;
     tt.team={'@', 2};
     for (;;){
         t.invade(EMPTY_LANDS(map));
         tt.invade(EMPTY_LANDS(map));
+        t.rest(5);
+        tt.rest(20);
         PrintMap(map);
         reset_console_cursor();
     }
