@@ -79,6 +79,7 @@ class Territory{
     }
     void invade(Territory ttt){
         float left=0.f;
+        bool first=true;
         do{
         left=0.f;
         int team=ttt.team.id;
@@ -94,7 +95,9 @@ class Territory{
                         available.push_back(j);
                 }
                 if (!available.empty()) {
-                    i->attack=attack*AttackBoost+left;
+                    if (first)
+                        i->attack=attack*AttackBoost+left;
+                    else i->attack=left;
                     float budget1=attack;
                     bool sucess=false;
                     float sum=0;
@@ -135,7 +138,9 @@ class Territory{
                     float sum=0;
                     int val=0;
                     if (j->team.id==team){
-                        i->attack=attack*AttackBoost+left;
+                        if (first)
+                            i->attack=attack*AttackBoost+left;
+                        else i->attack=left;
                         bool sucess=false;
                         if(i->Invade(j) && 
                             std::find(ps.begin(), ps.end(), j) == ps.end()){
@@ -157,6 +162,7 @@ class Territory{
                 }
             }
         }
+        first=false;
         } while (left>0.f);
     }
     void UpdateStats(){
