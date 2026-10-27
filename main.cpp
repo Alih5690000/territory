@@ -81,10 +81,13 @@ class Territory{
         float left=0.f;
         bool first=true;
         do{
-        left=0.f;
+        bool avai=false;
+        //std::cout<<"Left is "<<left<<std::endl;
+        //std::cout<<"Atack is "<<attack<<std::endl;
         int team=ttt.team.id;
         int invaded=0;
         auto bs=getBorders();
+        //std::cout<<"Borders size is "<<bs.size()<<std::endl;
         ttt.InitDefense();
         for (auto i:bs){
             auto ns=GetNeighbors(map, *i);
@@ -95,10 +98,11 @@ class Territory{
                         available.push_back(j);
                 }
                 if (!available.empty()) {
+                    avai=true;
                     if (first)
                         i->attack=attack*AttackBoost+left;
                     else i->attack=left;
-                    float budget1=attack;
+                    float budget1=(first ? attack : left);
                     bool sucess=false;
                     float sum=0;
                     int val=0;
@@ -115,8 +119,10 @@ class Territory{
                                     break;
                             }   
                         }
+                        //std::cout<<"j defense is "<<j->defense<<std::endl;
                         if(i->Invade(j) && 
                             std::find(ps.begin(), ps.end(), j) == ps.end()){
+                            //std::cout<<"Invasion"<<std::endl;
                             ps.push_back(j);
                             invaded++;
                             sucess=true;
@@ -129,24 +135,47 @@ class Territory{
                                 CancelDefense(j);
                         }
                     }
+                    //std::cout<<"Attack is "<<i->attack<<std::endl;
                     left=std::max(0.f, i->attack);
-                    if (sucess) attack-=sum/val;
+                    if (sucess && first) attack-=sum/val;
                 }
             }
             else{
-                for (auto j:ns){
+                std::vector<Pixel*> available;
+                for (auto j : ns) {
+                    if (j->team.id != team)
+                        available.push_back(j);
+                }
+                if (!available.empty()) {
+                    avai=true;
+                    if (first)
+                        i->attack=attack*AttackBoost+left;
+                    else i->attack=left;
+                    float budget1=(first ? attack : left);
+                    bool sucess=false;
                     float sum=0;
                     int val=0;
-                    if (j->team.id==team){
-                        if (first)
-                            i->attack=attack*AttackBoost+left;
-                        else i->attack=left;
-                        bool sucess=false;
+                    std::vector<Pixel*> visited;
+                    while(budget1>0){
+                        if (visited.size()==available.size()
+                            || i->attack<=0.f) break;
+                        Pixel* j;
+                        while(true){
+                            j = available[rand() % available.size()];
+                            if (std::find(visited.begin(), 
+                                visited.end(), j) == visited.end()){
+                                    visited.push_back(j);
+                                    break;
+                            }   
+                        }
+                        //std::cout<<"j defense is "<<j->defense<<std::endl;
                         if(i->Invade(j) && 
                             std::find(ps.begin(), ps.end(), j) == ps.end()){
+                            //std::cout<<"Invasion"<<std::endl;
                             ps.push_back(j);
                             invaded++;
                             sucess=true;
+                            budget1-=j->defense;
                             sum+=j->defense;
                             val++;
                         }
@@ -154,15 +183,15 @@ class Territory{
                             if (j->team.id!=this->team.id)
                                 CancelDefense(j);
                         }
-                        if (sucess) {
-                            attack-=sum/val;
-                            left=std::max(0.f, i->attack);
-                        }
                     }
+                    //std::cout<<"Attack is "<<i->attack<<std::endl;
+                    left=std::max(0.f, i->attack);
+                    if (sucess && first) attack-=sum/val;
                 }
             }
         }
         first=false;
+        if (!avai) break;
         } while (left>0.f);
     }
     void UpdateStats(){
@@ -235,13 +264,10 @@ int main(){
     Map map=CreateMap(20, 20);
     Territory t(map, {&map[0][0]});
     map[0][0].team={'#', 1};
-    t.attack=10;
-    t.defense=10;
     t.team={'#', 1};
     Territory tt(map, {&map[0][19]});
     map[0][19].team={'@', 2};
-    tt.attack=100;
-    tt.defense=100;
+    tt.AttackBoost=9;
     tt.team={'@', 2};
     for (;;){
         t.invade(EMPTY_LANDS(map));
