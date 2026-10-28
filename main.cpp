@@ -50,10 +50,13 @@ std::vector<Pixel*> GetNeighbors(Map& m, const Pixel& p){
     return neighbors;
 }
 
+std::vector<std::pair<std::pair<int,int>,std::pair<int,int>>> roads;
+
 class Territory{
     public:
     Team team;
     Map& map;
+    float Money=0.f;
     float AttackBoost=1.f;
     float DefenseBoost=1.f;
     float MaxAttack=10;
@@ -238,10 +241,26 @@ Map CreateMap(int w, int h){
     return res;
 }
 
+void ReadyMap(Map& m){
+    for (int i=0;i<roads.size();i++){
+        auto& road=roads[i];
+        auto& p1=road.first;
+        auto& p2=road.second;
+        for (int x=std::min(p1.first, p2.first);
+            x<=std::max(p1.first, p2.first);x++){
+            m[p1.second][x].team={'R', 0};
+        }
+        for (int y=std::min(p1.second, p2.second);
+            y<=std::max(p1.second, p2.second);y++){
+            m[y][p1.first].team={'R', 0};
+        }
+    }
+}
+
 void PrintMap(const Map& m){
-    for (auto i:m){
-        for (auto j:i){
-            std::cout<<j.team.color<<' ';
+    for (int I=0;I<m.size();I++){
+        for (int J=0;J<m[I].size();J++){
+            std::cout<<m[I][J].team.color<<' ';
         }
         std::cout<<std::endl;
     }
@@ -260,6 +279,7 @@ void reset_console_cursor() {
 }
 
 int main(){
+    roads.push_back({{5, 3}, {9, 8}});
     srand(time(NULL));
     Map map=CreateMap(20, 20);
     Territory t(map, {&map[0][0]});
@@ -267,7 +287,7 @@ int main(){
     t.team={'#', 1};
     Territory tt(map, {&map[0][19]});
     map[0][19].team={'@', 2};
-    tt.AttackBoost=9;
+    tt.AttackBoost=2;
     tt.team={'@', 2};
     for (;;){
         t.invade(EMPTY_LANDS(map));
@@ -276,6 +296,7 @@ int main(){
         tt.UpdateStats();
         t.rest(5);
         tt.rest(20);
+        ReadyMap(map);
         PrintMap(map);
         reset_console_cursor();
     }
