@@ -2,6 +2,7 @@
 #include <iostream>
 #include <algorithm>
 #include <windows.h>
+#include "json.hpp"
 
 struct Team{
     char color;
@@ -279,23 +280,31 @@ void reset_console_cursor() {
 }
 
 int main(){
-    roads.push_back({{5, 3}, {9, 8}});
     srand(time(NULL));
+    Object cfg=OpenJson("config.json");
+    Object plr1_cfg=cfg["plr1"].get<Object>();
+    Object plr2_cfg=cfg["plr2"].get<Object>();
     Map map=CreateMap(20, 20);
     Territory t(map, {&map[0][0]});
-    map[0][0].team={'#', 1};
-    t.team={'#', 1};
+    char plr1_clr=plr1_cfg["color"].get<std::string>()[0];
+    map[0][0].team={plr1_clr, 1};
+    t.team={plr1_clr, 1};
+    float plr1_attack=plr1_cfg["attack"].get<float>();
+    t.AttackBoost=plr1_attack;
     Territory tt(map, {&map[0][19]});
-    map[0][19].team={'@', 2};
-    tt.AttackBoost=2;
-    tt.team={'@', 2};
+    char plr2_clr=plr2_cfg["color"].get<std::string>()[0];
+    map[0][19].team={plr2_clr, 2};
+    tt.AttackBoost=plr2_cfg["attack"].get<float>();
+    tt.team={plr2_clr, 2};
+    float rest1=plr1_cfg["rest"].get<float>();
+    float rest2=plr2_cfg["rest"].get<float>();
     for (;;){
         t.invade(EMPTY_LANDS(map));
         tt.invade(EMPTY_LANDS(map));
         t.UpdateStats();
         tt.UpdateStats();
-        t.rest(5);
-        tt.rest(20);
+        t.rest(rest1);
+        tt.rest(rest2);
         ReadyMap(map);
         PrintMap(map);
         reset_console_cursor();

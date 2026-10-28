@@ -1,0 +1,12 @@
+{
+    "plr2": {
+        "color": "#",
+        "attack": 1.0,
+        "rest": 5.0
+    },
+    "plr1": {
+        "color": "@",
+        "attack": 2.0,
+        "rest": 20.0
+    }
+}
