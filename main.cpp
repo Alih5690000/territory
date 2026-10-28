@@ -3,6 +3,9 @@
 #include <algorithm>
 #include <windows.h>
 #include "json.hpp"
+#include <vector>
+#include "main.hpp"
+
 
 struct Team{
     char color;
@@ -34,9 +37,9 @@ struct Pixel {
     }
 };
 
-typedef std::vector<std::vector<Pixel>> Map;
+typedef std::vector<std::vector<Pixel>> MMap;
 
-std::vector<Pixel*> GetNeighbors(Map& m, const Pixel& p){
+std::vector<Pixel*> GetNeighbors(MMap& m, const Pixel& p){
     const int dx[4] = {1, -1, 0, 0};
     const int dy[4] = {0, 0, 1, -1};
     std::vector<Pixel*> neighbors;
@@ -56,7 +59,7 @@ std::vector<std::pair<std::pair<int,int>,std::pair<int,int>>> roads;
 class Territory{
     public:
     Team team;
-    Map& map;
+    MMap& map;
     float Money=0.f;
     float AttackBoost=1.f;
     float DefenseBoost=1.f;
@@ -221,16 +224,16 @@ class Territory{
         defense=std::min(defense+am, MaxDefense);
         attack=std::min(attack+am, MaxAttack);
     }
-    Territory(Map& ma, std::vector<Pixel*> p={}):map(ma){
+    Territory(MMap& ma, std::vector<Pixel*> p={}):map(ma){
         ps=p;
     }
 };
 
 std::vector<Pixel*> EMPTY={};
-Map EMPTY_MAP;
+MMap EMPTY_MAP;
 
-Map CreateMap(int w, int h){
-    Map res;
+MMap CreateMap(int w, int h){
+    MMap res;
     for (int i=0;i<h;i++){
         std::vector<Pixel> a;
         for (int j=0;j<w;j++){
@@ -242,7 +245,7 @@ Map CreateMap(int w, int h){
     return res;
 }
 
-void ReadyMap(Map& m){
+void ReadyMap(MMap& m){
     for (int i=0;i<roads.size();i++){
         auto& road=roads[i];
         auto& p1=road.first;
@@ -258,16 +261,20 @@ void ReadyMap(Map& m){
     }
 }
 
-void PrintMap(const Map& m){
+int PrintMap(const MMap& m){
+    int won=m[0][0].team.id;
     for (int I=0;I<m.size();I++){
         for (int J=0;J<m[I].size();J++){
             std::cout<<m[I][J].team.color<<' ';
+            if (m[I][J].team.id!=won && 
+                m[I][J].team.id!=0) won=-1;
         }
         std::cout<<std::endl;
     }
+    return won;
 }
 
-const auto EMPTY_LANDS=[](Map& m){
+const auto EMPTY_LANDS=[](MMap& m){
     auto t=Territory(m);
     t.team.id=-1;
     return t;
@@ -279,12 +286,24 @@ void reset_console_cursor() {
     SetConsoleCursorPosition(hConsole, pos);
 }
 
-int main(){
+int main(int argc, char* argv[]){
+    if (argc>1 && std::string(argv[1])=="view"){
+        DataBase db("victories.db");
+        Map main=db.ReadMapEx("main");
+        std::vector<Ellement> wins=main.Get("wins").GetVec();
+        std::cout<<"Wins: ";
+        for (auto i:wins){
+            std::cout<<i.GetInt()<<' ';
+        }
+        std::cout<<std::endl;
+        return 0;
+    }
     srand(time(NULL));
+    DataBase db("victories.db");
     Object cfg=OpenJson("config.json");
     Object plr1_cfg=cfg["plr1"].get<Object>();
     Object plr2_cfg=cfg["plr2"].get<Object>();
-    Map map=CreateMap(20, 20);
+    MMap map=CreateMap(20, 20);
     Territory t(map, {&map[0][0]});
     char plr1_clr=plr1_cfg["color"].get<std::string>()[0];
     map[0][0].team={plr1_clr, 1};
@@ -306,7 +325,28 @@ int main(){
         t.rest(rest1);
         tt.rest(rest2);
         ReadyMap(map);
-        PrintMap(map);
+        int won=PrintMap(map);
+        if (won!=-1){
+            if (db.attrs.find("main")==db.attrs.end()){
+                std::vector<Ellement> wins;
+                wins.push_back(Ellement{won});
+                Map<Ellement> main({Ellement{"wins", wins}});
+                db.AddMapEx("main", main);
+                db.WriteTo("victories.db");
+                std::cout<<"Player "<<won<<" won!"<<std::endl;
+                return 0;
+            }
+            else{
+                Map main=db.ReadMapEx("main");
+                std::vector<Ellement> wins=main.Get("wins").GetVec();
+                wins.push_back(Ellement{won});
+                main.Set("wins", Ellement{"wins", wins, true});
+                db.AddMapEx("main", main);
+                db.WriteTo("victories.db");
+                std::cout<<"Player "<<won<<" won!"<<std::endl;
+                return 0;
+            }
+        }
         reset_console_cursor();
     }
     /*t.rest(5);
