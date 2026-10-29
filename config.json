@@ -6,7 +6,7 @@
     },
     "plr1": {
         "color": "@",
-        "attack": 2.0,
+        "attack": 99.0,
         "rest": 20.0
     }
 }

@@ -340,7 +340,7 @@ int main(int argc, char* argv[]){
                 Map main=db.ReadMapEx("main");
                 std::vector<Ellement> wins=main.Get("wins").GetVec();
                 wins.push_back(Ellement{won});
-                main.Set("wins", Ellement{"wins", wins, true});
+                main.Set("wins", Ellement{"wins", wins});
                 db.AddMapEx("main", main);
                 db.WriteTo("victories.db");
                 std::cout<<"Player "<<won<<" won!"<<std::endl;
